@@ -1,0 +1,56 @@
+
+# --- Python bytecode / caches ---
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.mypy_cache/
+.pytype/
+.ruff_cache/
+.hypothesis/
+.coverage
+coverage.xml
+htmlcov/
+
+# --- Virtual environments ---
+# Common names
+.venv/
+venv/
+env/
+.env/
+
+# Poetry / Pipenv / Hatch / PDM
+.python-version
+.pdm-python
+.pdm.toml
+.pdm-build/
+.pipenv/
+
+# --- Build / packaging ---
+build/
+dist/
+*.egg-info/
+.eggs/
+pip-wheel-metadata/
+
+# --- Jupyter / notebooks ---
+.ipynb_checkpoints/
+
+# --- Logs / local runtime files ---
+*.log
+*.pid
+*.sqlite3
+
+# --- Editor / IDE ---
+.vscode/
+.idea/
+*.swp
+*~
+
+# --- OS files ---
+.DS_Store
+Thumbs.db
+
+# --- Docker / containers (local-only) ---
+*.tar
+
