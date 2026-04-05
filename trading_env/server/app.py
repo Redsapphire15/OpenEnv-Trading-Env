@@ -5,9 +5,9 @@
 # LICENSE file in the root directory of this source tree.
 
 """
-FastAPI application for the Trading Env Environment.
+FastAPI application for the execution desk environment.
 
-This module creates an HTTP server that exposes the TradingEnvironment
+This module creates an HTTP server that exposes TradingEnvironment
 over HTTP and WebSocket endpoints, compatible with EnvClient.
 
 Endpoints:
@@ -36,20 +36,20 @@ except Exception as e:  # pragma: no cover
     ) from e
 
 try:
-    from ..models import TradingAction, TradingObservation
+    from ..models import ExecutionDeskAction, ExecutionDeskObservation
     from .trading_env_environment import TradingEnvironment
 except ModuleNotFoundError:
-    from models import TradingAction, TradingObservation
+    from models import ExecutionDeskAction, ExecutionDeskObservation
     from server.trading_env_environment import TradingEnvironment
 
 
 # Create the app with web interface and README integration
 app = create_app(
     TradingEnvironment,
-    TradingAction,
-    TradingObservation,
-    env_name="trading_env",
-    max_concurrent_envs=1,  # increase this number to allow more concurrent WebSocket sessions
+    ExecutionDeskAction,
+    ExecutionDeskObservation,
+    env_name="execution_desk_assistant",
+    max_concurrent_envs=4,
 )
 
 
