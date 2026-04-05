@@ -1,5 +1,5 @@
 spec_version: 1
-name: trading_env
+name: execution_desk_assistant
 type: space
 runtime: fastapi
 app: server.app:app

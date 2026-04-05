@@ -4,12 +4,19 @@
 # This source code is licensed under the BSD-style license found in the
 # LICENSE file in the root directory of this source tree.
 
-"""Trading Env Environment."""
+"""Execution desk environment package."""
 
 from .client import TradingEnv
-from .models import TradingAction, TradingObservation
+from .models import (
+    ExecutionDeskAction,
+    ExecutionDeskObservation,
+    TradingAction,
+    TradingObservation,
+)
 
 __all__ = [
+    "ExecutionDeskAction",
+    "ExecutionDeskObservation",
     "TradingAction",
     "TradingObservation",
     "TradingEnv",

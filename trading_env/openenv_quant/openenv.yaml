@@ -1,0 +1,17 @@
+name: execution_desk_assistant
+entrypoint: openenv_quant.app:app
+env_class: openenv_quant.env.execution_env:ExecutionDeskEnv
+runtime:
+  python: "3.10"
+  port: 7860
+endpoints:
+  health: /health
+  reset: /reset
+  step: /step
+  state: /state
+models:
+  reset_request: openenv_quant.models:ResetRequest
+  reset_response: openenv_quant.models:ResetResponse
+  step_request: openenv_quant.models:StepRequest
+  step_response: openenv_quant.models:StepResponse
+  state_response: openenv_quant.models:StateResponse

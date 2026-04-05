@@ -4,7 +4,7 @@
 # This source code is licensed under the BSD-style license found in the
 # LICENSE file in the root directory of this source tree.
 
-"""Trading Env Environment Client."""
+"""Execution desk environment client."""
 
 from typing import Dict
 
@@ -12,14 +12,14 @@ from openenv.core import EnvClient
 from openenv.core.client_types import StepResult
 from openenv.core.env_server.types import State
 
-from .models import TradingAction, TradingObservation
+from .models import ExecutionDeskAction, ExecutionDeskObservation
 
 
 class TradingEnv(
-    EnvClient[TradingAction, TradingObservation, State]
+    EnvClient[ExecutionDeskAction, ExecutionDeskObservation, State]
 ):
     """
-    Client for the Trading Env Environment.
+    Client for the execution desk environment.
 
     This client maintains a persistent WebSocket connection to the environment server,
     enabling efficient multi-step interactions with lower latency.
@@ -44,34 +44,32 @@ class TradingEnv(
         ...     client.close()
     """
 
-    def _step_payload(self, action: TradingAction) -> Dict:
+    def _step_payload(self, action: ExecutionDeskAction) -> Dict:
         """
-        Convert TradingAction to JSON payload for step message.
+        Convert `ExecutionDeskAction` to JSON payload for step message.
 
         Args:
-            action: TradingAction instance
+            action: ExecutionDeskAction instance
 
         Returns:
             Dictionary representation suitable for JSON encoding
         """
-        return {
-            "message": action.message,
-        }
+        return action.model_dump(exclude_none=True)
 
-    def _parse_result(self, payload: Dict) -> StepResult[TradingObservation]:
+    def _parse_result(self, payload: Dict) -> StepResult[ExecutionDeskObservation]:
         """
-        Parse server response into StepResult[TradingObservation].
+        Parse server response into `StepResult[ExecutionDeskObservation]`.
 
         Args:
             payload: JSON response data from server
 
         Returns:
-            StepResult with TradingObservation
+            StepResult with `ExecutionDeskObservation`
         """
         obs_data = payload.get("observation", {})
-        observation = TradingObservation(
-            echoed_message=obs_data.get("echoed_message", ""),
-            message_length=obs_data.get("message_length", 0),
+        observation = ExecutionDeskObservation(
+            observation=obs_data.get("observation", {}),
+            info=obs_data.get("info", {}),
             done=payload.get("done", False),
             reward=payload.get("reward"),
             metadata=obs_data.get("metadata", {}),

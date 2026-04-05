@@ -11,7 +11,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "openenv-trading_env"
 version = "0.1.0"
-description = "Trading Env environment for OpenEnv"
+description = "Execution Desk Assistant environment for OpenEnv"
 requires-python = ">=3.10"
 dependencies = [
     # Core OpenEnv runtime (provides FastAPI server + HTTP client types)
@@ -41,5 +41,14 @@ server = "trading_env.server.app:main"
 
 [tool.setuptools]
 include-package-data = true
-packages = ["trading_env", "trading_env.server"]
+packages = [
+    "trading_env",
+    "trading_env.server",
+    "trading_env.openenv_quant",
+    "trading_env.openenv_quant.env",
+    "trading_env.openenv_quant.tasks",
+    "trading_env.openenv_quant.tools",
+    "trading_env.openenv_quant.utils",
+    "trading_env.openenv_quant.graders",
+]
 package-dir = { "trading_env" = ".", "trading_env.server" = "server" }
