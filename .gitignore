@@ -16,7 +16,7 @@ htmlcov/
 # Common names
 .venv/
 venv/
-env/
+
 .env/
 
 # Poetry / Pipenv / Hatch / PDM
