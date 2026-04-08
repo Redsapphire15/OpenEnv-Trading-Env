@@ -16,12 +16,8 @@ except Exception as e:  # pragma: no cover
         "openenv is required for the web interface. Install dependencies with '\n    uv sync\n'"
     ) from e
 
-try:
-    from ..models import ExecutionDeskAction, ExecutionDeskObservation
-    from .env_adapter import EnvAdapter
-except ModuleNotFoundError:
-    from models import ExecutionDeskAction, ExecutionDeskObservation
-    from trading_env.server.env_adapter import EnvAdapter
+from models import ExecutionDeskAction, ExecutionDeskObservation
+from server.env_adapter import EnvAdapter
 
 
 class SessionRegistry:
