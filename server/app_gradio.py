@@ -309,7 +309,11 @@ base_app = create_app(
     env_name="execution_desk_assistant",
     max_concurrent_envs=4,
 )
+from fastapi.responses import RedirectResponse
 
+@base_app.get("/")
+async def root():
+    return RedirectResponse(url="/ui")
 demo = build_gradio_ui()
 app = gr.mount_gradio_app(base_app, demo, path="/ui")
 
