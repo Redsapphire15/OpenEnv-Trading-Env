@@ -16,9 +16,9 @@ if __package__ in {None, ""}:
 
 from openai import OpenAI
 
-from trading_env.server.core.env.execution_desk_env import ExecutionDeskEnv, heuristic_policy
-from trading_env.server.core.tasks.task3_execution_assistance import grade_execution_quality
-from trading_env.server.core.utils.constants import ActionType
+from server.core.env.execution_desk_env import ExecutionDeskEnv, heuristic_policy
+from server.core.tasks.task3_execution_assistance import grade_execution_quality
+from server.core.utils.constants import ActionType
 
 import random
 

@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional
 
-from trading_env.server.core.utils.constants import BROKERS, Stage
+from server.core.utils.constants import BROKERS, Stage
 
 """
     Represents the full internal state of the trading environment.

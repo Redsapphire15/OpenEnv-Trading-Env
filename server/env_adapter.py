@@ -18,7 +18,7 @@ try:
 except ImportError:
     from models import ExecutionDeskAction, ExecutionDeskObservation
 
-from trading_env.server.core.env.execution_desk_env import ExecutionDeskEnv
+from server.core.env.execution_desk_env import ExecutionDeskEnv
 
 
 class EnvAdapter(Environment):

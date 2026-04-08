@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Any, Dict, List
 
-from trading_env.server.core.env.base_state import ScenarioState
+from server.core.env.base_state import ScenarioState
 
 
 def system_unresolved_issues(state: ScenarioState) -> List[str]:

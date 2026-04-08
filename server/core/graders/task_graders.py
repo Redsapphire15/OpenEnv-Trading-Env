@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Dict
 
-from trading_env.server.core.env.execution_desk_env import ExecutionDeskEnv, heuristic_policy
+from server.core.env.execution_desk_env import ExecutionDeskEnv, heuristic_policy
 
 
 def _bounded_score(value: float) -> float:

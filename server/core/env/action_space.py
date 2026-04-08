@@ -4,7 +4,7 @@ import math
 import random
 from typing import Any, Dict, List, Tuple
 
-from trading_env.server.core.utils.constants import (
+from server.core.utils.constants import (
     ACTION_TYPES,
     ALL_TOOLS,
     BROKERS,

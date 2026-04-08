@@ -3,10 +3,10 @@ from __future__ import annotations
 import copy
 from typing import Any, Dict, Optional
 
-from trading_env.server.core.env.base_state import ScenarioState
-from trading_env.server.core.tasks.task1_data_verification import evaluate_data_readiness
-from trading_env.server.core.tasks.task2_system_monitoring import evaluate_system_readiness
-from trading_env.server.core.tasks.task3_execution_assistance import (
+from server.core.env.base_state import ScenarioState
+from server.core.tasks.task1_data_verification import evaluate_data_readiness
+from server.core.tasks.task2_system_monitoring import evaluate_system_readiness
+from server.core.tasks.task3_execution_assistance import (
     evaluate_execution_complete,
     grade_execution_quality,
     _cumulative_slippage_bps,

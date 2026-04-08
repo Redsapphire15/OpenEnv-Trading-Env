@@ -74,7 +74,7 @@ def check_inference() -> None:
 
 
 def check_graders() -> None:
-    from trading_env.server.core.graders.task_graders import run_all_graders
+    from server.core.graders.task_graders import run_all_graders
 
     scores = run_all_graders(seed=7)
     repeated_scores = run_all_graders(seed=7)

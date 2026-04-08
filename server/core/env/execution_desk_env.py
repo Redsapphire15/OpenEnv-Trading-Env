@@ -4,16 +4,16 @@ import copy
 import random
 from typing import Any, Dict, Optional, Tuple
 
-from trading_env.server.core.env.action_space import OpenEnvEnv, build_action_space, build_observation_space
-from trading_env.server.core.env.base_state import Order, ScenarioState
-from trading_env.server.core.env.episode_manager import check_terminal_conditions, normalize_action
-from trading_env.server.core.env.observation_builder import build_info, build_observation
-from trading_env.server.core.env.reward_manager import RewardManager
-from trading_env.server.core.tasks.task1_data_verification import evaluate_data_readiness
-from trading_env.server.core.tasks.task2_system_monitoring import evaluate_system_readiness, system_unresolved_issues
-from trading_env.server.core.tasks.task3_execution_assistance import evaluate_execution_complete
-from trading_env.server.core.tools import TOOL_REGISTRY
-from trading_env.server.core.utils.constants import (
+from server.core.env.action_space import OpenEnvEnv, build_action_space, build_observation_space
+from server.core.env.base_state import Order, ScenarioState
+from server.core.env.episode_manager import check_terminal_conditions, normalize_action
+from server.core.env.observation_builder import build_info, build_observation
+from server.core.env.reward_manager import RewardManager
+from server.core.tasks.task1_data_verification import evaluate_data_readiness
+from server.core.tasks.task2_system_monitoring import evaluate_system_readiness, system_unresolved_issues
+from server.core.tasks.task3_execution_assistance import evaluate_execution_complete
+from server.core.tools import TOOL_REGISTRY
+from server.core.utils.constants import (
     ActionType,
     BROKERS,
     DATA_TOOLS,
@@ -21,7 +21,7 @@ from trading_env.server.core.utils.constants import (
     SYSTEM_TOOLS,
     URGENCY_LEVELS,
 )
-from trading_env.server.core.utils.randomizers import sample_data_anomaly
+from server.core.utils.randomizers import sample_data_anomaly
 
 
 class ToolSimulator:
