@@ -80,4 +80,5 @@ HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
 # New
 EXPOSE 7860
 
-CMD ["uvicorn", "server.app_gradio:app", "--host", "0.0.0.0", "--port", "7860"]
+#CMD ["uvicorn", "server.app_gradio:app", "--host", "0.0.0.0", "--port", "7860"]
+CMD ["sh", "-c", "uvicorn server.app_gradio:app --host 0.0.0.0 --port ${PORT}"]

@@ -311,8 +311,8 @@ base_app = create_app(
 )
 
 demo = build_gradio_ui()
-app = gr.mount_gradio_app(base_app, demo, path="/ui")
-
+# app = gr.mount_gradio_app(base_app, demo, path="/ui")
+app = gr.mount_gradio_app(base_app, demo, path="/")
 
 def main(host: str = "0.0.0.0", port: int = 8000):
     import uvicorn
