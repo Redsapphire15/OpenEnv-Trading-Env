@@ -1,56 +1,57 @@
 
-# --- Python bytecode / caches ---
+# Virtual Environments
+.venv/
+venv/
+env/
+ENV/
+
+# Secrets and Local Configurations
+.env
+
+# OpenEnv Run Logs / Artifacts
+episode_log.json
+episode_log.jsonl
+
+# Python Caches & Bytecode
 __pycache__/
 *.py[cod]
 *$py.class
-.pytest_cache/
-.mypy_cache/
-.pytype/
-.ruff_cache/
-.hypothesis/
-.coverage
-coverage.xml
-htmlcov/
+*.so
+.Python
 
-# --- Virtual environments ---
-# Common names
-.venv/
-venv/
-
-.env/
-
-# Poetry / Pipenv / Hatch / PDM
-.python-version
-.pdm-python
-.pdm.toml
-.pdm-build/
-.pipenv/
-
-# --- Build / packaging ---
+# Distribution and Packaging
 build/
+develop-eggs/
 dist/
-*.egg-info/
+downloads/
+eggs/
 .eggs/
-pip-wheel-metadata/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
 
-# --- Jupyter / notebooks ---
-.ipynb_checkpoints/
-
-# --- Logs / local runtime files ---
-*.log
-*.pid
-*.sqlite3
-
-# --- Editor / IDE ---
+# IDEs / Editor Folders
 .vscode/
 .idea/
 *.swp
-*~
+*.swo
 
-# --- OS files ---
+# Testing
+.coverage
+.pytest_cache/
+.tox/
+.nox/
+
+# OS / System Specific
 .DS_Store
-Thumbs.db
 
-# --- Docker / containers (local-only) ---
-*.tar
+# Agentic tool folders
+.agents/
 

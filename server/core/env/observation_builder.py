@@ -6,7 +6,11 @@ from typing import Any, Dict, Optional
 from trading_env.server.core.env.base_state import ScenarioState
 from trading_env.server.core.tasks.task1_data_verification import evaluate_data_readiness
 from trading_env.server.core.tasks.task2_system_monitoring import evaluate_system_readiness
-from trading_env.server.core.tasks.task3_execution_assistance import evaluate_execution_complete
+from trading_env.server.core.tasks.task3_execution_assistance import (
+    evaluate_execution_complete,
+    grade_execution_quality,
+    _cumulative_slippage_bps,
+)
 
 
 def build_observation(state: ScenarioState) -> Dict[str, Any]:
@@ -79,6 +83,15 @@ def build_observation(state: ScenarioState) -> Dict[str, Any]:
             "tolerance": execution["tolerance"],
             "tracking_error": abs(execution["target_position"] - execution["current_position"]),
             "recent_slippage_bps": execution["recent_slippage_bps"],
+            # Hard Task 3 constraints visible to the agent
+            "slippage_budget_bps": execution.get("slippage_budget_bps"),
+            "cumulative_slippage_bps": round(_cumulative_slippage_bps(state), 4),
+            "exec_step_budget": execution.get("exec_step_budget"),
+            "exec_steps_used": (
+                state.step_count - execution["exec_stage_start_step"]
+                if execution.get("exec_stage_start_step") is not None
+                else None
+            ),
         },
         "order_state": {
             "outstanding_orders": [order.snapshot() for order in state.outstanding_orders.values()],
@@ -131,11 +144,27 @@ def build_info(state: ScenarioState, recency_limit_minutes: int, event: Optional
     - Primarily intended for diagnostics, logging, or feeding auxiliary information.
     """
     event = event or {}
+    exec_status = evaluate_execution_complete(state)
+    exec_quality = grade_execution_quality(state)
+
     return {
         "completed_flags": copy.deepcopy(state.completed_flags),
         "issue_log": list(state.issue_log),
         "data_validation": evaluate_data_readiness(state, recency_limit_minutes),
         "system_readiness": evaluate_system_readiness(state),
-        "execution_status": evaluate_execution_complete(state),
+        "execution_status": {
+            **exec_status,
+            # Hard Task 3 diagnostics exposed in info
+            "slippage_over_budget": exec_quality["avg_slippage_bps"] > exec_quality["slippage_budget_bps"],
+            "risk_limit_breached": state.risk_limit_breached,
+            "exec_steps_remaining": (
+                max(0, state.execution_truth.get("exec_step_budget", 25) - (
+                    state.step_count - state.execution_truth["exec_stage_start_step"]
+                ))
+                if state.execution_truth.get("exec_stage_start_step") is not None
+                else None
+            ),
+            "quality": exec_quality,
+        },
         "event": copy.deepcopy(event),
     }

@@ -63,6 +63,10 @@ class ToolSimulator:
                 "market_mid": mid_price,
                 "recent_slippage_bps": 0.0,
                 "fills": [],
+                # Hard Task 3 constraints (randomised per seed)
+                "slippage_budget_bps": round(self.rng.uniform(15.0, 35.0), 2),
+                "exec_step_budget": self.rng.randint(20, 30),
+                "exec_stage_start_step": None,   # set when EXECUTION stage begins
             },
         )
         if not state.system_truth["oms_connected"]:
@@ -299,6 +303,10 @@ class ToolSimulator:
             order.status = "filled"
         state.execution_truth["current_position"] += sign * fill_size
         state.execution_truth["recent_slippage_bps"] = round(abs(slippage_bps), 4)
+        # Check risk limit breach
+        risk_limit = state.data_truth.get("risk_limit", float("inf"))
+        if abs(state.execution_truth["current_position"]) > risk_limit:
+            state.risk_limit_breached = True
         state.execution_truth["fills"].append(
             {
                 "order_id": order.order_id,
@@ -431,6 +439,8 @@ class ExecutionDeskEnv(OpenEnvEnv):
             if self.scenario.stage == Stage.SYSTEM_HEALTH and readiness["ready"]:
                 self.scenario.stage = Stage.EXECUTION
                 self.scenario.completed_flags["systems_ready"] = True
+                # Record when execution stage started for the step-budget grader
+                self.scenario.execution_truth["exec_stage_start_step"] = self.scenario.step_count
                 event["stage_advanced"] = True
             else:
                 event["premature_declare"] = True

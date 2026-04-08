@@ -17,13 +17,16 @@ if __package__ in {None, ""}:
 from openai import OpenAI
 
 from trading_env.server.core.env.execution_desk_env import ExecutionDeskEnv, heuristic_policy
-from trading_env.server.core.graders.task_graders import run_all_graders
+from trading_env.server.core.tasks.task3_execution_assistance import grade_execution_quality
 from trading_env.server.core.utils.constants import ActionType
+
+import random
 
 API_BASE_URL = os.getenv("API_BASE_URL") or "https://router.huggingface.co/v1"
 MODEL_NAME = os.getenv("MODEL_NAME") or "Qwen/Qwen2.5-72B-Instruct"
 API_KEY = os.getenv("HF_TOKEN") or os.getenv("API_KEY")
 LOCAL_IMAGE_NAME = os.getenv("LOCAL_IMAGE_NAME")
+SEED = int(os.getenv("SEED", str(random.randint(1, 10000))))
 TASK_NAME = os.getenv("TASK_NAME", "execution-desk-assistant")
 BENCHMARK = os.getenv("BENCHMARK", "openenv_execution_desk")
 MAX_STEPS = int(os.getenv("MAX_STEPS", "60"))
@@ -70,10 +73,12 @@ def log_step(step: int, action: str, reward: float, done: bool, error: Optional[
     )
 
 
-def log_end(success: bool, steps: int, score: float, rewards: List[float]) -> None:
+def log_end(success: bool, steps: int, grader_scores: Dict[str, float], rewards: List[float]) -> None:
     rewards_str = ",".join(f"{reward:.2f}" for reward in rewards)
+    score_str = ", ".join(f"{k}={v:.3f}" for k, v in grader_scores.items())
+    avg_score = sum(grader_scores.values()) / max(1, len(grader_scores))
     print(
-        f"[END] success={str(success).lower()} steps={steps} score={score:.3f} rewards={rewards_str}",
+        f"[END] success={str(success).lower()} steps={steps} mean_score={avg_score:.3f} | Tasks: {score_str} | rewards={rewards_str}",
         flush=True,
     )
 
@@ -201,16 +206,18 @@ episode_log = {
 
 def main() -> None:
     client = build_client()
-    env = ExecutionDeskEnv(seed=7, max_steps=MAX_STEPS)
+    env = ExecutionDeskEnv(seed=SEED, max_steps=MAX_STEPS)
     rewards: List[float] = []
     steps_taken = 0
     score = 0.0
+    grader_scores = {}
     success = False
 
     log_start(task=TASK_NAME, env=BENCHMARK, model=MODEL_NAME)
+    print(f"[INFO] Running with SEED={SEED}", flush=True)
 
     try:
-        observation, info = env.reset(seed=7)
+        observation, info = env.reset(seed=SEED)
         terminated = False
         truncated = False
 
@@ -275,10 +282,30 @@ def main() -> None:
             if done:
                 break
 
-        grader_scores = run_all_graders(seed=7)
-        score = sum(grader_scores.values()) / max(len(grader_scores), 1)
+        # --- Task 1: Data Validation ---
+        completed_flags = info["completed_flags"]
+        data_ready_score = 1.0 if completed_flags.get("data_ready") else 0.0
+
+        # --- Task 2: System Readiness ---
+        systems_ready_score = 1.0 if completed_flags.get("systems_ready") else 0.0
+
+        # --- Task 3: Hard Execution Quality (multi-objective) ---
+        t3 = grade_execution_quality(env.scenario)
+        execution_score = t3["final"]
+
+        grader_scores = {
+            "task1_data_validation": round(data_ready_score, 4),
+            "task2_system_readiness": round(systems_ready_score, 4),
+            "task3_execution": round(execution_score, 4),
+            # sub-scores for transparency
+            "task3_tracking": t3["tracking_score"],
+            "task3_slippage": t3["slippage_score"],
+            "task3_risk": t3["risk_score"],
+            "task3_step": t3["step_score"],
+        }
+        score = (data_ready_score + systems_ready_score + execution_score) / 3.0
         score = min(max(score, 0.0), 1.0)
-        success = score >= SUCCESS_SCORE_THRESHOLD and info["completed_flags"]["execution_complete"]
+        success = score >= SUCCESS_SCORE_THRESHOLD and completed_flags.get("execution_complete", False)
         for step_data in episode_log["steps"]:
             step_data["grader"] = {
                 "score": score,
@@ -292,13 +319,15 @@ def main() -> None:
             episode_log["final"] = {
                 "success": success,
                 "score": score,
+                "task_scores": grader_scores,
                 "steps": steps_taken,
-                "rewards": rewards
+                "rewards": rewards,
+                "seed_used": SEED
             }
             with open("episode_log.json", "w") as f:
                 json.dump(episode_log, f, indent=2)
 
-            log_end(success=success, steps=steps_taken, score=score, rewards=rewards)
+            log_end(success=success, steps=steps_taken, grader_scores=grader_scores, rewards=rewards)
 
 
 if __name__ == "__main__":

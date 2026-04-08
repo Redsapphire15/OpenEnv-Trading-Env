@@ -61,6 +61,7 @@ class ScenarioState:
     issue_log: List[str] = field(default_factory=list)
     escalated: bool = False
     escalation_reason: Optional[str] = None
+    risk_limit_breached: bool = False
     data_truth: Dict[str, Any] = field(default_factory=dict)
     data_anomalies: Dict[str, Dict[str, Any]] = field(default_factory=dict)
     system_truth: Dict[str, Any] = field(default_factory=dict)

@@ -16,8 +16,13 @@ except Exception as e:  # pragma: no cover
         "openenv is required for the web interface. Install dependencies with '\n    uv sync\n'"
     ) from e
 
+if __package__ in {None, ""}:
+    import sys
+    from pathlib import Path
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+
 from models import ExecutionDeskAction, ExecutionDeskObservation
-from server.env_adapter import EnvAdapter
+from trading_env.server.env_adapter import EnvAdapter
 
 
 class SessionRegistry:
