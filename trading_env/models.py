@@ -37,5 +37,8 @@ class ExecutionDeskObservation(Observation):
 
 
 # Backward-compatible aliases with the scaffold names.
+
+# [Please see]
+# We can safely remove this? and change in init as well
 TradingAction = ExecutionDeskAction
 TradingObservation = ExecutionDeskObservation

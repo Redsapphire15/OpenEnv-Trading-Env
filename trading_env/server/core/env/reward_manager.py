@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Any, Dict
 
-from trading_env.openenv_quant.env.base_state import ScenarioState
+from trading_env.server.core.env.base_state import ScenarioState
 
 
 class RewardManager:

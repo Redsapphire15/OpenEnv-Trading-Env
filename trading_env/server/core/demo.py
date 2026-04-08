@@ -5,7 +5,7 @@ import sys
 if __package__ in {None, ""}:
     sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from trading_env.openenv_quant.env.execution_env import heuristic_policy, run_demo
+from trading_env.server.core.env.execution_desk_env import heuristic_policy, run_demo
 
 
 if __name__ == "__main__":

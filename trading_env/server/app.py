@@ -7,7 +7,7 @@
 """
 FastAPI application for the execution desk environment.
 
-This module creates an HTTP server that exposes TradingEnvironment
+This module creates an HTTP server that exposes EnvAdapter (Core environment)
 over HTTP and WebSocket endpoints, compatible with EnvClient.
 
 Endpoints:
@@ -37,19 +37,20 @@ except Exception as e:  # pragma: no cover
 
 try:
     from ..models import ExecutionDeskAction, ExecutionDeskObservation
-    from .trading_env_environment import TradingEnvironment
+    from .env_adapter import EnvAdapter
 except ModuleNotFoundError:
     from models import ExecutionDeskAction, ExecutionDeskObservation
-    from server.trading_env_environment import TradingEnvironment
+    from trading_env.server.env_adapter import EnvAdapter
 
 
 # Create the app with web interface and README integration
 app = create_app(
-    TradingEnvironment,
+    EnvAdapter,
     ExecutionDeskAction,
     ExecutionDeskObservation,
     env_name="execution_desk_assistant",
     max_concurrent_envs=4,
+    enable_web_interface=True,
 )
 
 

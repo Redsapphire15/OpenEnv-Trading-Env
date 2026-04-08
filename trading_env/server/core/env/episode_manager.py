@@ -2,11 +2,11 @@ from __future__ import annotations
 
 from typing import Any, Dict, Tuple
 
-from trading_env.openenv_quant.env.base_state import ScenarioState
-from trading_env.openenv_quant.tasks.task1_data_verification import evaluate_data_readiness
-from trading_env.openenv_quant.tasks.task2_system_monitoring import system_unresolved_issues
-from trading_env.openenv_quant.tasks.task3_execution_assistance import evaluate_execution_complete
-from trading_env.openenv_quant.utils.constants import ACTION_TYPES, ALL_TOOLS, BROKERS, DECLARE_FLAGS, URGENCY_LEVELS
+from trading_env.server.core.env.base_state import ScenarioState
+from trading_env.server.core.tasks.task1_data_verification import evaluate_data_readiness
+from trading_env.server.core.tasks.task2_system_monitoring import system_unresolved_issues
+from trading_env.server.core.tasks.task3_execution_assistance import evaluate_execution_complete
+from trading_env.server.core.utils.constants import ACTION_TYPES, ALL_TOOLS, BROKERS, DECLARE_FLAGS, URGENCY_LEVELS
 
 
 def scalar(value: Any) -> float:
@@ -16,7 +16,7 @@ def scalar(value: Any) -> float:
 
 
 def normalize_action(action: Dict[str, Any], state: ScenarioState) -> Dict[str, Any]:
-    from trading_env.openenv_quant.utils.constants import ActionType
+    from trading_env.server.core.utils.constants import ActionType
 
     action_type = action.get("action_type", ActionType.CALL_TOOL)
     if not isinstance(action_type, ActionType):
@@ -55,7 +55,7 @@ def normalize_action(action: Dict[str, Any], state: ScenarioState) -> Dict[str, 
 
 def check_terminal_conditions(state: ScenarioState, recency_limit_minutes: int) -> Tuple[bool, bool, Dict[str, Any]]:
     event: Dict[str, Any] = {}
-    from trading_env.openenv_quant.utils.constants import Stage
+    from trading_env.server.core.utils.constants import Stage
 
     if state.stage == Stage.DONE:
         return True, False, {"success": True}
