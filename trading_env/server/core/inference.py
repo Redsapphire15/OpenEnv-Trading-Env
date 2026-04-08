@@ -6,6 +6,8 @@ import textwrap
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
+from dotenv import load_dotenv
+load_dotenv()
 
 if __package__ in {None, ""}:
     import sys
@@ -14,9 +16,9 @@ if __package__ in {None, ""}:
 
 from openai import OpenAI
 
-from trading_env.openenv_quant.env.execution_env import ExecutionDeskEnv, heuristic_policy
-from trading_env.openenv_quant.graders.task_graders import run_all_graders
-from trading_env.openenv_quant.utils.constants import ActionType
+from trading_env.server.core.env.execution_desk_env import ExecutionDeskEnv, heuristic_policy
+from trading_env.server.core.graders.task_graders import run_all_graders
+from trading_env.server.core.utils.constants import ActionType
 
 API_BASE_URL = os.getenv("API_BASE_URL") or "https://router.huggingface.co/v1"
 MODEL_NAME = os.getenv("MODEL_NAME") or "Qwen/Qwen2.5-72B-Instruct"
@@ -145,11 +147,14 @@ def parse_model_action(text: str) -> Optional[Dict[str, Any]]:
 def get_model_action(client: OpenAI, observation: Dict[str, Any], info: Dict[str, Any], step: int) -> Dict[str, Any]:
     fallback = heuristic_policy(observation, info)
     try:
+        obs_summary = summarize_for_model(observation, info, step)
+
+
         completion = client.chat.completions.create(
             model=MODEL_NAME,
             messages=[
                 {"role": "system", "content": SYSTEM_PROMPT},
-                {"role": "user", "content": summarize_for_model(observation, info, step)},
+                {"role": "user", "content": obs_summary},
             ],
             temperature=TEMPERATURE,
             max_tokens=MAX_TOKENS,
@@ -157,9 +162,17 @@ def get_model_action(client: OpenAI, observation: Dict[str, Any], info: Dict[str
         )
         content = (completion.choices[0].message.content or "").strip()
         parsed = parse_model_action(content)
-        return parsed if parsed else fallback
+        return {
+            "action": parsed if parsed else fallback,
+            "model_output": content,
+            "model_input": obs_summary
+            }
     except Exception:
-        return fallback
+        return {
+            "action": fallback,
+            "model_output": "ERROR",
+            "model_input": ""
+        }
 
 
 def extract_error(info: Dict[str, Any]) -> Optional[str]:
@@ -176,6 +189,15 @@ def extract_error(info: Dict[str, Any]) -> Optional[str]:
         return "bad_escalation"
     return None
 
+
+episode_log = {
+    "meta": {
+        "task_name": TASK_NAME,
+        "benchmark": BENCHMARK,
+        "model": MODEL_NAME
+    },
+    "steps": []
+}
 
 def main() -> None:
     client = build_client()
@@ -196,10 +218,50 @@ def main() -> None:
             if terminated or truncated:
                 break
 
-            action = get_model_action(client, observation, info, step)
-            observation, reward, terminated, truncated, info = env.step(action)
+            model_result = get_model_action(client, observation, info, step)
 
+            action = model_result["action"]
+            model_output = model_result["model_output"]
+            model_input = model_result["model_input"]            
+            observation, reward, terminated, truncated, info = env.step(action)
             done = terminated or truncated
+
+            step_data = {
+                "step": step,
+
+                "observation": {
+                    "task_stage": observation.get("task_stage"),
+                    "position_state": observation["position_state"],
+                    "system_status": observation["system_status"],
+                    "order_state": observation["order_state"],
+                    "data_validation": info["data_validation"],
+                    "execution_status": info["execution_status"]
+                },
+
+                "available_actions": [a.value for a in ActionType],
+
+                "action": action,
+                "action_str": action_to_string(action),
+
+                "hidden_state": info,
+
+                "reward": reward,
+                "done": done,
+                "error": extract_error(info),
+
+                "prompts": {
+                    "system": SYSTEM_PROMPT,
+                    "user": model_input,
+                    "model_output": model_output
+                },
+
+                "grader": {}
+            }
+
+            episode_log["steps"].append(step_data)
+            with open("episode_log.jsonl", "a") as f:
+                f.write(json.dumps(step_data) + "\n")
+
             rewards.append(reward)
             steps_taken = step
             log_step(
@@ -217,10 +279,25 @@ def main() -> None:
         score = sum(grader_scores.values()) / max(len(grader_scores), 1)
         score = min(max(score, 0.0), 1.0)
         success = score >= SUCCESS_SCORE_THRESHOLD and info["completed_flags"]["execution_complete"]
+        for step_data in episode_log["steps"]:
+            step_data["grader"] = {
+                "score": score,
+                "passed": success,
+                "threshold": SUCCESS_SCORE_THRESHOLD
+            }
     finally:
         try:
             env.close()
         finally:
+            episode_log["final"] = {
+                "success": success,
+                "score": score,
+                "steps": steps_taken,
+                "rewards": rewards
+            }
+            with open("episode_log.json", "w") as f:
+                json.dump(episode_log, f, indent=2)
+
             log_end(success=success, steps=steps_taken, score=score, rewards=rewards)
 
 

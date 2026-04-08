@@ -39,16 +39,8 @@ dev = [
 # or: python -m trading_env.server.app
 server = "trading_env.server.app:main"
 
-[tool.setuptools]
-include-package-data = true
-packages = [
-    "trading_env",
-    "trading_env.server",
-    "trading_env.openenv_quant",
-    "trading_env.openenv_quant.env",
-    "trading_env.openenv_quant.tasks",
-    "trading_env.openenv_quant.tools",
-    "trading_env.openenv_quant.utils",
-    "trading_env.openenv_quant.graders",
-]
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["server*"]
+
 package-dir = { "trading_env" = ".", "trading_env.server" = "server" }

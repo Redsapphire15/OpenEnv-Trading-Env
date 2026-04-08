@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from fastapi import FastAPI
 
-from trading_env.openenv_quant.env.execution_env import ExecutionDeskEnv
-from trading_env.openenv_quant.models import HealthResponse, ResetRequest, ResetResponse, StateResponse, StepRequest, StepResponse
+from trading_env.server.core.env.execution_desk_env import ExecutionDeskEnv
+from to_trash.models import HealthResponse, ResetRequest, ResetResponse, StateResponse, StepRequest, StepResponse
 
 
 app = FastAPI(title="Execution Desk Assistant", version="0.1.0")

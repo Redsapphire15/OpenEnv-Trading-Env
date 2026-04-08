@@ -3,8 +3,23 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional
 
-from trading_env.openenv_quant.utils.constants import BROKERS, Stage
+from trading_env.server.core.utils.constants import BROKERS, Stage
 
+"""
+    Represents the full internal state of the trading environment.
+
+    This state contains all detailed information about:
+      - Orders (outstanding, filled, rejected)
+      - System truth and data anomalies
+      - Step count, current stage, and broker
+      - Tool outputs, failures, and call counts
+      - Flags indicating completion of data/systems/execution stages
+
+    Notes:
+    - This is the **complete environment state**, used internally by the environment.
+    - RL agents do NOT see all of this; they only observe a simplified view through the observation space.
+    - Early stages (e.g., verification) may have no actionable order yet; later stages include order placement info.
+"""
 
 @dataclass
 class Order:

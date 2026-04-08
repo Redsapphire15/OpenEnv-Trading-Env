@@ -30,8 +30,8 @@ def check_openenv_spec() -> None:
 
 
 def check_api() -> None:
-    from trading_env.openenv_quant import app as app_module
-    from trading_env.openenv_quant.models import ResetRequest, StepRequest
+    from to_trash import app as app_module
+    from to_trash.models import ResetRequest, StepRequest
 
     paths = {route.path for route in app_module.app.routes}
     for required_path in ["/health", "/reset", "/step", "/state"]:
@@ -74,7 +74,7 @@ def check_inference() -> None:
 
 
 def check_graders() -> None:
-    from trading_env.openenv_quant.graders.task_graders import run_all_graders
+    from trading_env.server.core.graders.task_graders import run_all_graders
 
     scores = run_all_graders(seed=7)
     repeated_scores = run_all_graders(seed=7)

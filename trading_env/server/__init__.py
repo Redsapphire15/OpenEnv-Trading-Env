@@ -6,6 +6,6 @@
 
 """Trading Env environment server components."""
 
-from .trading_env_environment import TradingEnvironment
+from .env_adapter import EnvAdapter
 
-__all__ = ["TradingEnvironment"]
+__all__ = ["EnvAdapter"]
