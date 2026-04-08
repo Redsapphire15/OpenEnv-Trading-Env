@@ -31,10 +31,12 @@ uv sync
 ## Run the server
 
 ```bash
-uv run server
+uvicorn server.app_gradio:app --host 0.0.0.0 --port 7860
 ```
 
-Default URL: `http://127.0.0.1:8000`
+Default URL: `http://127.0.0.1:7860`
+
+Gradio UI: `http://127.0.0.1:7860/ui/`
 
 Useful routes:
 - `GET /health`
@@ -185,7 +187,7 @@ Terminal bonus/penalty depends on success vs unresolved issues.
 ### 1) Health check
 
 ```bash
-curl -s http://127.0.0.1:8000/health
+curl -s http://127.0.0.1:7860/health
 ```
 
 ### 2) Async client smoke test
@@ -196,7 +198,7 @@ import asyncio
 from trading_env import TradingEnv, ExecutionDeskAction
 
 async def main():
-    env = TradingEnv(base_url="http://127.0.0.1:8000")
+    env = TradingEnv(base_url="http://127.0.0.1:7860")
     try:
         r = await env.reset()
         print("reset stage:", r.observation.observation.get("task_stage"))
@@ -265,4 +267,3 @@ trading_env/
     ├── tools/
     └── utils/
 ```
-

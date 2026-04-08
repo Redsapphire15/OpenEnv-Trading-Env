@@ -1,9 +1,5 @@
 
 # Virtual Environments
-.venv/
-venv/
-env/
-ENV/
 
 # Secrets and Local Configurations
 .env

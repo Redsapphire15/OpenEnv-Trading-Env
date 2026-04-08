@@ -22,39 +22,40 @@ def check_env_vars() -> None:
 
 
 def check_openenv_spec() -> None:
-    spec_path = ROOT / "openenv.yaml"
+    spec_path = ROOT.parent / "openenv.yaml"
     spec = yaml.safe_load(spec_path.read_text())
-    required_keys = {"name", "entrypoint", "env_class", "endpoints", "models"}
+    required_keys = {"spec_version", "name", "type", "runtime", "app", "port"}
     if not required_keys.issubset(spec):
         raise RuntimeError("openenv.yaml is missing required keys")
+    if spec["app"] != "server.app_gradio:app":
+        raise RuntimeError("openenv.yaml app must be server.app_gradio:app")
+    if spec["port"] != 7860:
+        raise RuntimeError("openenv.yaml port must be 7860")
 
 
 def check_api() -> None:
-    from to_trash import app as app_module
-    from to_trash.models import ResetRequest, StepRequest
+    from server import app_gradio as app_module
+    from models import ExecutionDeskAction
 
     paths = {route.path for route in app_module.app.routes}
     for required_path in ["/health", "/reset", "/step", "/state"]:
         if required_path not in paths:
             raise RuntimeError(f"Missing API route: {required_path}")
 
-    health_response = app_module.health()
-    if health_response.status != "ok":
-        raise RuntimeError("Health endpoint did not return ok")
-
-    reset_response = app_module.reset(ResetRequest(seed=7, options=None))
+    env = app_module.EnvAdapter()
+    reset_response = env.reset()
     if not reset_response.observation:
-        raise RuntimeError("Reset endpoint did not return an observation")
+        raise RuntimeError("Reset did not return an observation")
 
-    state_response = app_module.state()
-    if not state_response.observation:
-        raise RuntimeError("State endpoint did not return an observation")
+    state_response = env.state()
+    if not state_response:
+        raise RuntimeError("State did not return a payload")
 
-    step_response = app_module.step(
-        StepRequest(action={"action_type": "CALL_TOOL", "tool_name": "bloomberg_pull"})
+    step_response = env.step(
+        ExecutionDeskAction(action_type="CALL_TOOL", tool_name="bloomberg_pull")
     )
     if not isinstance(step_response.reward, float):
-        raise RuntimeError("Step endpoint did not return a float reward")
+        raise RuntimeError("Step did not return a float reward")
 
 
 def check_inference() -> None:
