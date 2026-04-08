@@ -25,11 +25,11 @@ ARG BUILD_MODE=in-repo
 ARG ENV_NAME=trading_env
 
 # Copy environment code (always at root of build context)
-COPY . /app/env
+COPY . /app
 
 # For in-repo builds, openenv is already vendored in the build context
 # For standalone builds, openenv will be installed via pyproject.toml
-WORKDIR /app/env
+WORKDIR /app
 
 # Ensure uv is available (for local builds where base image lacks it)
 RUN if ! command -v uv >/dev/null 2>&1; then \
