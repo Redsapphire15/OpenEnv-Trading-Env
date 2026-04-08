@@ -313,7 +313,7 @@ from fastapi.responses import RedirectResponse
 
 @base_app.get("/")
 async def root():
-    return RedirectResponse(url="/ui")
+    return RedirectResponse(url="/ui/")
 demo = build_gradio_ui()
 app = gr.mount_gradio_app(base_app, demo, path="/ui")
 
