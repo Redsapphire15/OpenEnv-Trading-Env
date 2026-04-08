@@ -5,24 +5,20 @@ import os
 import subprocess
 import sys
 from pathlib import Path
+from typing import Callable
 
 import httpx
 import yaml
 
 if __package__ in {None, ""}:
-    sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+    sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 ROOT = Path(__file__).resolve().parent
-
-
-def check_env_vars() -> None:
-    missing = [name for name in ["API_BASE_URL", "MODEL_NAME", "HF_TOKEN"] if not os.getenv(name)]
-    if missing:
-        raise RuntimeError(f"Missing required environment variables: {', '.join(missing)}")
+PROJECT_ROOT = ROOT.parents[1]
 
 
 def check_openenv_spec() -> None:
-    spec_path = ROOT.parent / "openenv.yaml"
+    spec_path = PROJECT_ROOT / "openenv.yaml"
     spec = yaml.safe_load(spec_path.read_text())
     required_keys = {"spec_version", "name", "type", "runtime", "app", "port"}
     if not required_keys.issubset(spec):
@@ -33,35 +29,65 @@ def check_openenv_spec() -> None:
         raise RuntimeError("openenv.yaml port must be 7860")
 
 
-def check_api() -> None:
-    from server import app_gradio as app_module
-    from models import ExecutionDeskAction
+def _check_http_contract(request: Callable[..., httpx.Response]) -> None:
+    health_response = request("GET", "/health")
+    health_response.raise_for_status()
+    health_payload = health_response.json()
+    if health_payload.get("status") not in {"ok", "healthy"}:
+        raise RuntimeError(f"Unexpected health response: {health_payload}")
 
-    paths = {route.path for route in app_module.app.routes}
-    for required_path in ["/health", "/reset", "/step", "/state"]:
-        if required_path not in paths:
-            raise RuntimeError(f"Missing API route: {required_path}")
+    state_response = request("GET", "/state")
+    state_response.raise_for_status()
+    state_payload = state_response.json()
+    if "episode_id" not in state_payload or "step_count" not in state_payload:
+        raise RuntimeError(f"Unexpected state payload: {state_payload}")
 
-    env = app_module.EnvAdapter()
-    reset_response = env.reset()
-    if not reset_response.observation:
-        raise RuntimeError("Reset did not return an observation")
+    reset_response = request("POST", "/reset")
+    reset_response.raise_for_status()
+    reset_payload = reset_response.json()
+    if "observation" not in reset_payload:
+        raise RuntimeError("Reset response missing observation")
 
-    state_response = env.state()
-    if not state_response:
-        raise RuntimeError("State did not return a payload")
-
-    step_response = env.step(
-        ExecutionDeskAction(action_type="CALL_TOOL", tool_name="bloomberg_pull")
+    step_response = request(
+        "POST",
+        "/step",
+        json={"action": {"action_type": "CALL_TOOL", "tool_name": "market_status_check"}},
     )
-    if not isinstance(step_response.reward, float):
-        raise RuntimeError("Step did not return a float reward")
+    step_response.raise_for_status()
+    step_payload = step_response.json()
+    if "observation" not in step_payload or "reward" not in step_payload:
+        raise RuntimeError(f"Unexpected step payload: {step_payload}")
 
 
-def check_inference() -> None:
+def check_app_import() -> None:
+    from server.app_gradio import app
+
+    paths = {route.path for route in app.routes}
+    for required_path in ["/health", "/reset", "/step", "/state", "/ui"]:
+        if required_path not in paths:
+            raise RuntimeError(f"Missing route in app_gradio: {required_path}")
+
+
+def check_http_url(base_url: str) -> None:
+    with httpx.Client(base_url=base_url.rstrip("/"), timeout=20.0) as client:
+        _check_http_contract(client.request)
+
+
+def check_named_url(env_var: str) -> bool:
+    base_url = os.getenv(env_var)
+    if not base_url:
+        return False
+    check_http_url(base_url)
+    return True
+
+
+def check_inference() -> bool:
+    if not os.getenv("HF_TOKEN") and not os.getenv("API_KEY"):
+        return False
+
     result = subprocess.run(
         [sys.executable, str(ROOT / "inference.py")],
-        cwd=ROOT.parent,
+        cwd=PROJECT_ROOT,
         capture_output=True,
         text=True,
         timeout=1200,
@@ -72,6 +98,7 @@ def check_inference() -> None:
         raise RuntimeError("Inference logs do not follow [START]/[STEP]/[END] framing")
     if len([line for line in lines if line.startswith("[STEP]")]) == 0:
         raise RuntimeError("Inference did not emit any [STEP] lines")
+    return True
 
 
 def check_graders() -> None:
@@ -91,23 +118,12 @@ def check_graders() -> None:
         raise RuntimeError("Graders appear degenerate across seeds")
 
 
-def check_space_ping() -> bool:
-    space_url = os.getenv("SPACE_URL")
-    if not space_url:
-        return False
-    with httpx.Client(timeout=10.0) as client:
-        response = client.get(space_url.rstrip("/") + "/health")
-        if response.status_code != 200:
-            raise RuntimeError(f"Space health ping failed with status {response.status_code}")
-    return True
-
-
 def check_docker_build() -> bool:
     if os.getenv("RUN_DOCKER_CHECK") != "1":
         return False
     subprocess.run(
-        ["docker", "build", "-t", "openenv-quant-check", str(ROOT)],
-        cwd=ROOT.parent,
+        ["docker", "build", "-t", "execution-desk-check", str(PROJECT_ROOT)],
+        cwd=PROJECT_ROOT,
         check=True,
         timeout=1200,
     )
@@ -115,17 +131,39 @@ def check_docker_build() -> bool:
 
 
 def main() -> None:
-    check_env_vars()
+    checks: list[str] = []
+    skipped: list[str] = []
+
     check_openenv_spec()
-    check_api()
-    check_inference()
+    checks.append("openenv_spec")
+
+    check_app_import()
+    checks.append("app_import")
+
+    if check_named_url("LOCAL_BASE_URL"):
+        checks.append("local_http")
+    else:
+        skipped.append("local_http")
+
+    if check_named_url("SPACE_URL"):
+        checks.append("space_http")
+    else:
+        skipped.append("space_http")
+
+    if check_inference():
+        checks.append("inference")
+    else:
+        skipped.append("inference")
+
     check_graders()
-    checks = ["env", "openenv_spec", "api", "inference", "graders"]
-    if check_space_ping():
-        checks.append("space_ping")
+    checks.append("graders")
+
     if check_docker_build():
         checks.append("docker_build")
-    print(json.dumps({"status": "ok", "checks": checks}, indent=2))
+    else:
+        skipped.append("docker_build")
+
+    print(json.dumps({"status": "ok", "checks": checks, "skipped": skipped}, indent=2))
 
 
 if __name__ == "__main__":
